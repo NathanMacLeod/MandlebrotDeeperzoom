@@ -24,12 +24,21 @@
     <ClCompile Include="src\BigFloat.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\Mandlebrot.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\BigFloat.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\olcPixelGameEngine.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\stb_image_write.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\Mandlebrot.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

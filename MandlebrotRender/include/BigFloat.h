@@ -4,6 +4,11 @@
 #include <array>
 #include <regex>
 
+#define N_THREADS 12
+#define DEEP_ZOOM false
+static int HASNT_DIVERGED = -1;
+static int BLOCK_SIZE = 8;
+
 template<int length>
 class BitString {
 public:
@@ -84,11 +89,11 @@ public:
 		return difference.bits[length - 1];
 	}
 
-	bool is_negative() const{
+	bool is_negative() const {
 		return (bits[0] & 0x80000000) != 0;
 	}
 
-	void shift_right_with(uint32_t shift_amount, uint32_t shift_in=0) {
+	void shift_right_with(uint32_t shift_amount, uint32_t shift_in = 0) {
 		if (shift_amount == 0) return;
 
 		int shift_indx_gap = shift_amount / 32;
@@ -127,7 +132,7 @@ public:
 		int shift_indx_gap = shift_amount / 32;
 		//simple case
 		if (shift_amount % 32 == 0) {
-			
+
 			for (int i = 0; i < length - shift_indx_gap; i++) {
 				if (i >= shift_indx_gap)         bits[i] = bits[i + shift_indx_gap];
 				else                              bits[i] = 0;
@@ -544,13 +549,12 @@ bool operator<(const BitString<length>& a, uint32_t x);
 template<int length>
 bool operator>(const BitString<length>& a, uint32_t x);
 
-template <int exponent_length, int mantissa_length>
+template <int mantissa_length>
 class BigFloat {
 public:
 	BigFloat()
 		: is_zero(true)
 	{
-		exponent.bits.fill(0);
 		mantissa.bits.fill(0);
 	}
 
@@ -560,14 +564,9 @@ public:
 		uint64_t d_bits = *(uint64_t*)&d;
 
 		uint64_t d_mantissa = DOUBLE_MANTISSA_MASK & d_bits;
-		int32_t d_exponent = ((DOUBLE_EXPONENT_MASK & d_bits) >> DOUBLE_EXPONENT_OFFSET) - DOUBLE_EXPONENT_BIAS;
+		exponent = ((DOUBLE_EXPONENT_MASK & d_bits) >> DOUBLE_EXPONENT_OFFSET) - DOUBLE_EXPONENT_BIAS;
 
 		mantissa.bits.fill(0);
-		if (d_exponent < 0) exponent.bits.fill(0xFFFFFFFF); //make negative with two's compliment
-		else                exponent.bits.fill(0);
-		
-
-		exponent.bits[exponent_length - 1] = d_exponent;
 		//store the first 32 bits of the mantissa in length - 1, and the remaining 20 bits in length - 2
 		mantissa.bits[0] = d_mantissa >> FIRST_MANTISSA_CHUNK_IN_DOUBLE_OFFSET;
 		if (mantissa_length > 1) {
@@ -575,8 +574,8 @@ public:
 		}
 	}
 
-	BigFloat(bool is_negative, BitString<exponent_length>&& exponent, BitString<mantissa_length>&& mantissa)
-		: is_negative(is_negative), is_zero(false), exponent(std::move(exponent)), mantissa(std::move(mantissa))
+	BigFloat(bool is_negative, int32_t exponent, BitString<mantissa_length>&& mantissa)
+		: is_negative(is_negative), is_zero(false), exponent(exponent), mantissa(std::move(mantissa))
 	{}
 
 	static bool scientific_notation_number_valid(std::string scientific_notation) {
@@ -589,7 +588,7 @@ public:
 		return std::regex_match(scientific_notation, scientific_notation_pattern);
 	}
 
-	BigFloat(std::string scientific_notation) 
+	BigFloat(std::string scientific_notation)
 		: is_negative(false), is_zero(false)
 	{
 		if (!scientific_notation_number_valid(scientific_notation)) {
@@ -597,15 +596,14 @@ public:
 			printf("WARN: %s is not valid scientific notation format.\n", scientific_notation.c_str());
 			return;
 		}
-		exponent.bits.fill(0);
 		mantissa.bits.fill(0);
 
 		std::vector<uint8_t> left_of_fp;
 		std::vector<uint8_t> right_of_fp;
-		uint32_t exponent_val = 0;
+		int32_t exponent_val = 0;
 		bool exponent_negative = false;
 
-		enum parse_state { OPTIONAL_NEGATIVE, LEFT_OF_FLOATING_POINT, RIGHT_OF_FLOATING_POINT, EXPONENT_SIGN, EXPONENT_DIGITS};
+		enum parse_state { OPTIONAL_NEGATIVE, LEFT_OF_FLOATING_POINT, RIGHT_OF_FLOATING_POINT, EXPONENT_SIGN, EXPONENT_DIGITS };
 		parse_state state = OPTIONAL_NEGATIVE;
 		int i = 0;
 		while (i < scientific_notation.size()) {
@@ -702,41 +700,7 @@ public:
 	double to_double() const {
 		if (is_zero) return 0;
 
-		uint32_t exponent_value = exponent.bits[exponent_length - 1];
-		bool exponent_negative = (0x80000000 & exponent.bits[0]) != 0;
-
-		uint32_t d_exponent_val;
-		if (exponent_negative) {
-			bool more_signficant_bits_make_exponent_below_min = false;
-			for (int i = 0; i < exponent_length - 1; i++) {
-				if (exponent.bits[i] != 0xFFFFFFFF) more_signficant_bits_make_exponent_below_min = true;
-			}
-
-			if (more_signficant_bits_make_exponent_below_min) {
-				d_exponent_val = 0;
-			}
-			else {
-				int exponent_unnegated = ~exponent_value + 1;
-				d_exponent_val = std::min<uint32_t>(DOUBLE_EXPONENT_BIAS - 1, exponent_unnegated); //-1 since exponent of all 0 is reserved for special values
-				d_exponent_val = DOUBLE_EXPONENT_BIAS - exponent_unnegated;
-			}
-		}
-		else {
-			bool more_signficant_bits_make_exponent_above_max = false;
-			for (int i = 0; i < exponent_length - 2; i++) {
-				if (exponent.bits[i] != 0x00000000) more_signficant_bits_make_exponent_above_max = true;
-			}
-
-			if (more_signficant_bits_make_exponent_above_max) {
-				d_exponent_val = 2 * DOUBLE_EXPONENT_BIAS;
-			}
-			else {
-				d_exponent_val = std::min<uint32_t>(DOUBLE_EXPONENT_BIAS, exponent_value);
-				d_exponent_val += DOUBLE_EXPONENT_BIAS; //account for the bias
-			}
-		}
-
-		uint64_t out_exponent = uint64_t(d_exponent_val) << DOUBLE_EXPONENT_OFFSET;
+		uint64_t out_exponent = uint64_t(exponent + DOUBLE_EXPONENT_BIAS) << DOUBLE_EXPONENT_OFFSET;
 		uint64_t out_sign = is_negative ? 0x8000000000000000 : 0;
 		uint64_t out_mantissa_bits;
 		if (mantissa_length > 1) {
@@ -761,8 +725,7 @@ public:
 			binary.right_of_fp.push_back(ith_bit_set);
 		}
 
-		int exponent_signed = exponent.bits[0];
-		binary.mult_self_by_pow2(exponent_signed);
+		binary.mult_self_by_pow2(exponent);
 
 		FloatingPointDecimalString decimal = binary.to_decimal();
 
@@ -790,34 +753,10 @@ public:
 		return out;
 	}
 
-	template<int source_exp_len, int source_mant_len>
-	BigFloat(const BigFloat<source_exp_len, source_mant_len>& b) 
-		: is_negative(b.is_negative), is_zero(b.is_zero)
+	template<int source_mant_len>
+	BigFloat(const BigFloat<source_mant_len>& b)
+		: is_negative(b.is_negative), is_zero(b.is_zero), exponent(b.exponent)
 	{
-		bool source_exponent_negative = b.exponent.is_negative();
-		int min_exp_length = std::min<int>(source_exp_len, exponent_length);
-		for (int i = 0; i < min_exp_length; i++) {
-			exponent.bits[exponent_length - 1 - i] = b.exponent.bits[source_exp_len - 1 - i];
-		}
-		for (int i = min_exp_length; i < std::max<int>(source_exp_len, exponent_length); i++) {
-			//if source has longer exponent, we are checking if it has a bit set such that its value is too big/small for us to store.
-			//in that case, we will just use the max / min 
-			//if the source has a smaller exponent, we just need to add the correct leading bits depending on if it is positive/negative.
-			if (source_exp_len > exponent_length) {
-				if (source_exponent_negative && b.exponent.bits[source_exp_len - 1 - i] != 0xFFFFFFFF) {
-					exponent.set_to_min_negative();
-					break;
-				}
-				else if (!source_exponent_negative && b.exponent.bits[source_exp_len - 1 - i] != 0x0) {
-					exponent.set_to_max_positive();
-					break;
-				}
-			}
-			else {
-				exponent.bits[exponent_length - 1 - i] = source_exponent_negative ? 0xFFFFFFFF : 0x00000000;
-			}
-		}
-
 		for (int i = 0; i < mantissa_length; i++) {
 			mantissa.bits[i] = i < source_mant_len ? b.mantissa.bits[i] : 0;
 		}
@@ -836,7 +775,7 @@ public:
 
 		BigFloat out;
 		out.is_zero = false;
-		int32_t exponent_difference = exponent.sub_capped_at_int32_t_size(b.exponent);
+		int32_t exponent_difference = exponent - b.exponent;
 		const BitString<mantissa_length>* larger_exponent_mantissa = nullptr;
 		if (exponent_difference > 0) {
 			out.exponent = exponent;
@@ -910,27 +849,27 @@ public:
 		out.exponent += b.exponent;
 
 		//detect and cap at min and max exponent values in case of over/under flow
-		if (this->exponent.is_negative() && b.exponent.is_negative() && !out.exponent.is_negative()) out.exponent.set_to_min_negative();
-		if (!this->exponent.is_negative() && !b.exponent.is_negative() && out.exponent.is_negative()) out.exponent.set_to_max_positive();
+		if (exponent < 0 && b.exponent < 0 && out.exponent > 0) out.exponent = 0x8000000;
+		if (this->exponent > 0 && b.exponent > 0 && out.exponent < 0) out.exponent = 0x77777777;
 
 		uint32_t value_left_of_floating_point = 1; //start with 1 from leading 1 x 1
 
 		if (!this->mantissa.is_zero() && !b.mantissa.is_zero())
-		for (int i = 0; i < mantissa_length; i++) {
-			int max_index_within_accuracy_bounds = std::min(mantissa_length, mantissa_length - i);
-			for (int j = 0; j < max_index_within_accuracy_bounds; j++) {
+			for (int i = 0; i < mantissa_length; i++) {
+				int max_index_within_accuracy_bounds = std::min(mantissa_length, mantissa_length - i);
+				for (int j = 0; j < max_index_within_accuracy_bounds; j++) {
 
-				uint64_t product = uint64_t(b.mantissa.bits[i]) * uint64_t(mantissa.bits[j]);
-				uint32_t lower_half = product & 0x00000000FFFFFFFF;
-				uint32_t upper_half = product >> 32;
+					uint64_t product = uint64_t(b.mantissa.bits[i]) * uint64_t(mantissa.bits[j]);
+					uint32_t lower_half = product & 0x00000000FFFFFFFF;
+					uint32_t upper_half = product >> 32;
 
-				int target_index = i + j + 1;
-				if (target_index < mantissa_length) {
-					value_left_of_floating_point += out.mantissa.add_with_carryover(target_index, lower_half);
+					int target_index = i + j + 1;
+					if (target_index < mantissa_length) {
+						value_left_of_floating_point += out.mantissa.add_with_carryover(target_index, lower_half);
+					}
+					value_left_of_floating_point += out.mantissa.add_with_carryover(target_index - 1, upper_half);
 				}
-				value_left_of_floating_point += out.mantissa.add_with_carryover(target_index - 1, upper_half);
 			}
-		}
 
 		//floating point representation as an implied 1 before the mantissa (e.g. 1.<mantissa bits>).
 		//we already accounted for the mutliplication for <this> times the 1 from b by initializing out with the mantissa from <this>,
@@ -951,7 +890,7 @@ public:
 		uint32_t right_shift_amount = carry_out_msb_pos - 1;
 		out.mantissa.shift_right_with(right_shift_amount, value_left_of_floating_point);
 		out.exponent += right_shift_amount;
-		
+
 		return out;
 	}
 
@@ -968,7 +907,7 @@ public:
 			printf("ERR: divison by zero");
 			return zero();
 		}
-		
+
 		//find inverse of a floating point approximation of the mantissa of b
 		uint64_t b_mantissa_float_approx = 0x3FF0000000000000 | (uint64_t(b.mantissa.bits[0]) << FIRST_MANTISSA_CHUNK_IN_DOUBLE_OFFSET);
 		if (mantissa_length > 1) b_mantissa_float_approx |= (uint64_t(b.mantissa.bits[1]) >> NUM_BITS_CUT_OFF_FROM_SECOND_MANITSSA_CHUNK_IN_DOUBLE & 0xFFFFF);
@@ -977,7 +916,7 @@ public:
 		BigFloat b_inv(inverse);
 		BigFloat b_mantissa(b);
 		b_mantissa.is_negative = false;
-		for (int i = 0; i < exponent_length; i++) b_mantissa.exponent.bits[i] = 0;
+		b_mantissa.exponent = 0;
 
 		//refine inverse newton-raphson
 
@@ -1021,7 +960,7 @@ public:
 private:
 	bool is_negative;
 	bool is_zero;
-	BitString<exponent_length> exponent;
+	int32_t exponent;
 	BitString<mantissa_length> mantissa;
 
 	//https://en.wikipedia.org/wiki/Double-precision_floating-point_format
@@ -1032,6 +971,6 @@ private:
 	const static uint32_t NUM_BITS_CUT_OFF_FROM_SECOND_MANITSSA_CHUNK_IN_DOUBLE = 12;
 	const static uint32_t FIRST_MANTISSA_CHUNK_IN_DOUBLE_OFFSET = DOUBLE_EXPONENT_OFFSET - 32;
 
-	template <int other_exp_l, int other_mant_l>
+	template <int other_mant_l>
 	friend class BigFloat;
 };

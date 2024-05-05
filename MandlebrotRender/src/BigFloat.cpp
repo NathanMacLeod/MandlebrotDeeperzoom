@@ -34,7 +34,7 @@ FloatingPointBinaryString FloatingPointDecimalString::to_binary(int max_bits_rig
 }
 
 template<int exp_len, int mant_len>
-BigFloat<exp_len, mant_len> operator*(double d, BigFloat<exp_len, mant_len> b) {
+BigFloat<mant_len> operator*(double d, BigFloat<mant_len> b) {
 	if (d == 2) return b.times2();
 	return BigFloat<exp_len, mant_len>(d) * b;
 }

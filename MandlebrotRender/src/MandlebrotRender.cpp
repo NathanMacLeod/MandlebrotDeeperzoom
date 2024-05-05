@@ -6,19 +6,21 @@
 #include <cinttypes>
 #include "../include/BigFloat.h"
 
-template<int exp_l, int mnt_l>
+template<int mnt_l>
 void test(double x, double y) {
-    BigFloat<exp_l, mnt_l> big_x(x);
-    BigFloat <exp_l, mnt_l> big_y(y);
+    BigFloat<mnt_l> big_x(x);
+    BigFloat<mnt_l> big_y(y);
 
-    BigFloat<exp_l, mnt_l> big_product = big_x * big_y;
-    BigFloat<exp_l, mnt_l> big_sum = big_x + big_y;
-    BigFloat<exp_l, mnt_l> big_diff = big_x - big_y;
-    BigFloat<exp_l, mnt_l> big_quotient = big_x / big_y;
+    BigFloat<mnt_l> big_product = big_x * big_y;
+    BigFloat<mnt_l> big_sum = big_x + big_y;
+    BigFloat<mnt_l> big_diff = big_x - big_y;
+    BigFloat<mnt_l> big_quotient = big_x / big_y;
+
+    double d = big_x.to_double();
 
     printf(
-        "\n=========\nTESTING FOR EXP_L: %d, MNT_L: %d, X=%.16f, Y=%.16f\nbig_x: %.16f\nbig_y: %.16f\nbig_product: %.16f, actual: %.16f\nbig_sum: %.16f, acual: %.16f\nbig_diff: %.16f, actual: %.16f\nbig_quotient: %.16f, actual: %.16f\n=========",
-        exp_l, mnt_l, x, y, big_x.to_double(), big_y.to_double(), big_product.to_double(), x * y, big_sum.to_double(), x + y, big_diff.to_double(), x - y, big_quotient.to_double(), x / y
+        "\n=========\nTESTING FOR MNT_L: %d, X=%.16f, Y=%.16f\nbig_x: %.16f\nbig_y: %.16f\nbig_product: %.16f, actual: %.16f\nbig_sum: %.16f, acual: %.16f\nbig_diff: %.16f, actual: %.16f\nbig_quotient: %.16f, actual: %.16f\n=========",
+        mnt_l, x, y, big_x.to_double(), big_y.to_double(), big_product.to_double(), x * y, big_sum.to_double(), x + y, big_diff.to_double(), x - y, big_quotient.to_double(), x / y
     );
 }
 
@@ -46,7 +48,7 @@ void validate_on_many() {
 
 //int main() {
 //    ////test<3, 3>(0.11111111111111111111, 0.11111111111111111111);
-//    //test<3, 3>(-1.5, -0.75);
+//    test<3>(-1.5, -0.75);
 //    ///*test<2, 2>(7, 7);
 //    //test<1, 1>(0.5, 0.5);
 //    //test<1, 2>(64, 128);
@@ -82,7 +84,7 @@ void validate_on_many() {
 //    ////    printf("one: %x, f: %f, inv: %f, inv_exponent: %d\n", *(uint32_t*)&one, f, inv, inv_exponent);
 //    ////}
 //
-//    struct scientific_actual_pair {
+//   /* struct scientific_actual_pair {
 //        std::string scientific;
 //        double actual;
 //    };
@@ -101,5 +103,5 @@ void validate_on_many() {
 //
 //    for (scientific_actual_pair p : test_pairs) {
 //        printf("scientific: %s, actual: %.16f, bigfloat: %s\n", p.scientific.c_str(), p.actual, BigFloat<1, 2>(p.scientific).to_scientific_notation().c_str());
-//    }
+//    }*/
 //}
