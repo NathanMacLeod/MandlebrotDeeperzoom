@@ -18,13 +18,16 @@
     <ClCompile Include="src\MandlebrotRender.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\main.cpp">
+    <ClCompile Include="src\InteractiveExplorer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\BigFloat.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Mandlebrot.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -41,5 +44,14 @@
     <ClInclude Include="include\Mandlebrot.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\InteractiveExplorer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\optionparser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="packages.config" />
   </ItemGroup>
 </Project>

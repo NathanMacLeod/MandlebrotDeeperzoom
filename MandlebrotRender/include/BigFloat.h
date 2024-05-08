@@ -4,11 +4,6 @@
 #include <array>
 #include <regex>
 
-#define N_THREADS 12
-#define DEEP_ZOOM false
-static int HASNT_DIVERGED = -1;
-static int BLOCK_SIZE = 8;
-
 template<int length>
 class BitString {
 public:
