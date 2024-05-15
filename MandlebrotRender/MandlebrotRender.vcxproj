@@ -19,18 +19,20 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\AnimationRender.cpp" />
+    <ClCompile Include="src\ArgumentParsing.cpp" />
     <ClCompile Include="src\BigFloat.cpp" />
-    <ClCompile Include="src\InteractiveExplorer.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Mandlebrot.cpp" />
     <ClCompile Include="src\MandlebrotRender.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\AnimationRender.h" />
+    <ClInclude Include="include\ArgumentParsing.h" />
     <ClInclude Include="include\BigFloat.h" />
     <ClInclude Include="include\InteractiveExplorer.h" />
     <ClInclude Include="include\Mandlebrot.h" />
     <ClInclude Include="include\olcPixelGameEngine.h" />
-    <ClInclude Include="include\optionparser.h" />
     <ClInclude Include="include\stb_image_write.h" />
   </ItemGroup>
   <ItemGroup>
@@ -122,6 +124,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -137,6 +140,7 @@
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>$(SolutionDir)MandlebrotRender\include</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>

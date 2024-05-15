@@ -18,9 +18,6 @@
     <ClCompile Include="src\MandlebrotRender.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\InteractiveExplorer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\BigFloat.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -28,6 +25,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\AnimationRender.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\ArgumentParsing.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -47,7 +50,10 @@
     <ClInclude Include="include\InteractiveExplorer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="include\optionparser.h">
+    <ClInclude Include="include\AnimationRender.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\ArgumentParsing.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

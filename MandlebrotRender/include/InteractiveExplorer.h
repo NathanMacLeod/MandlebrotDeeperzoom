@@ -19,12 +19,16 @@ public:
 		}
 	}
 
-	void draw_mandlebrot(cmplx<BigFloat<4>> cam_pos, double zoom, int max_iterations, int supersample_factor, bool smoothing_enabled, int approximation_block_size, rgb gradient_min_color, rgb gradient_max_color) {
+	void draw_mandlebrot(cmplx<BigFloat<4>> cam_pos, double zoom, int max_iterations, int supersample_factor, bool smoothing_enabled, int approximation_block_size, const std::vector<rgb>& gradient) {
 		int calc_width = ScreenWidth() * supersample_factor;
 		int calc_height = ScreenHeight() * supersample_factor;
-		std::vector<float> calc = calculate_mandlebrot_dynamic_accuracy(calc_width, calc_height, zoom * supersample_factor, cam_pos, max_iterations, approximation_block_size * supersample_factor, smoothing_enabled);
+
+		std::vector<float> calc;
+		if (approximation_block_size > 1) calc = calculate_mandlebrot_dynamic_accuracy(calc_width, calc_height, zoom * supersample_factor, cam_pos, max_iterations, approximation_block_size * supersample_factor, smoothing_enabled);
+		else                              calc = calculate_mandlebrot_simple(calc_width, calc_height, zoom * supersample_factor, cam_pos, max_iterations, smoothing_enabled);
+
 		if (supersample_factor != 1) calc = downsize_cacluation(calc, calc_width, calc_height, supersample_factor);
-		image img = render_calculation_histogram(ScreenWidth(), ScreenHeight(), calc, gradient_min_color, gradient_max_color);
+		image img = render_calculation_histogram(ScreenWidth(), ScreenHeight(), calc, gradient);
 		draw_image(img);
 	}
 
@@ -32,22 +36,18 @@ public:
 		return 700 * log(zoom / 50);
 	}
 
-	InteractiveExplorer()
+	InteractiveExplorer(render_settings settings)
+		: settings(settings)
 	{
 		sAppName = "Mandlebrot";
 	}
 
-	//very cool, zooms into spiral and then mini mandlebrot
-	//static long double zoom = 199671284473369792;
-	//static long double camPos[2]{ -0.8032523144678346, 0.1780442509067320 };
-
 	bool OnUserCreate() override
 	{
-		// Called once at the start, so create things here
 		zoom = ScreenWidth() / 4;
 		cam_pos = { 0, 0 };
 
-		draw_mandlebrot(cam_pos, zoom, get_dynamic_iteration_count(zoom), 1, true, BLOCK_SIZE, min_gradient_color, max_gradient_color);
+		draw_mandlebrot(cam_pos, zoom, settings.max_iterations, settings.supersample_factor, settings.smoothing_enabled, settings.approximation_block_size, settings.gradient);
 		return true;
 	}
 
@@ -66,10 +66,9 @@ public:
 				zoom /= 1.5;
 			}
 
-			draw_mandlebrot(cam_pos, zoom, get_dynamic_iteration_count(zoom), 1, true, BLOCK_SIZE, min_gradient_color, max_gradient_color);
+			draw_mandlebrot(cam_pos, zoom, settings.max_iterations, settings.supersample_factor, settings.smoothing_enabled, settings.approximation_block_size, settings.gradient);
 			printf("(%s, %s), %f\n", cam_pos.re.to_scientific_notation().c_str(), cam_pos.im.to_scientific_notation().c_str(), zoom);
 		}
-		// called once per frame
 		return true;
 	}
 
@@ -77,6 +76,6 @@ private:
 	static const int BLOCK_SIZE = 8;
 	cmplx<BigFloat<4>> cam_pos;
 	double zoom;
-	rgb min_gradient_color = { 51, 0, 77 };
-	rgb max_gradient_color = { 255, 204, 204 };
+
+	render_settings settings;
 };

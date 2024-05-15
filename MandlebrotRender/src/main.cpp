@@ -1,12 +1,20 @@
 #include "../include/Mandlebrot.h"
 #define OLC_PGE_APPLICATION
 #include "../include/InteractiveExplorer.h"
-#include "../include/optionparser.h"
+#include "../include/AnimationRender.h"
+#include "../include/ArgumentParsing.h"
 
-enum option_index { UNKNOWN, HELP, INTERACTIVE, RENDER, POS_REAL };
+int main(int argc, char* argv[])
+ {
+	run_info info = parse_run_info_from_args(argc, argv);
+	if (info.parse_error) return 1;
 
-int main() {
-	InteractiveExplorer demo;
-	if (demo.Construct(300, 200, 3, 3))
-		demo.Start();
+	if (info.use_interactive_mode) {
+		InteractiveExplorer demo(info.settings);
+		if (demo.Construct(300, 200, 3, 3))
+			demo.Start();
+	}
+	else {
+		multithreaded_render(info.settings);
+	}
 }

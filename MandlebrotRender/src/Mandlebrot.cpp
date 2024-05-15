@@ -44,14 +44,19 @@ void export_iamge(std::string path, image img) {
 	stbi_write_png(path.c_str(), img.width, img.height, 3, img.pixels.data(), sizeof(rgb) * img.width);
 }
 
-image render_calculation_histogram(int image_width, int image_height, const std::vector<float>& itr_to_diverge_per_pixel, rgb min_itr_color, rgb max_itr_color) {
+image render_calculation_histogram(int image_width, int image_height, const std::vector<float>& itr_to_diverge_per_pixel, const std::vector<rgb>& gradient) {
 	image out;
-	out.height = image_width;
-	out.width = image_height;
+	out.width = image_width;
+	out.height = image_height;
+
+	if (gradient.size() < 2) {
+		printf("Gradient needs to contain at least 2 colors\n");
+		return out;
+	}
 
 	//using histogram approach described here: https://www.fractalforums.com/programming/newbie-how-to-map-colors-in-the-mandelbrot-set/
 	std::map<float, int> num_pixels_at_iteration_count;
-	int total_divergent_pixels = 0;
+	int total_divergent_pixels = 1; //want the numerator in gradient to always be at least 1 smaller than the denominator
 	for (float itr_count : itr_to_diverge_per_pixel) {
 		if (itr_count == HASNT_DIVERGED) continue;
 
@@ -89,9 +94,13 @@ image render_calculation_histogram(int image_width, int image_height, const std:
 				color = { 0, 0, 0 };
 			}
 			else {
-				color.r = min_itr_color.r + (max_itr_color.r - min_itr_color.r) * gradient_value;
-				color.g = min_itr_color.g + (max_itr_color.g - min_itr_color.g) * gradient_value;
-				color.b = min_itr_color.b + (max_itr_color.b - min_itr_color.b) * gradient_value;
+				double scaled_gradient = gradient_value * (gradient.size() - 1);
+				int i = int(scaled_gradient);
+				double t = fmod(scaled_gradient, 1.0);
+
+				color.r = gradient[i].r + (gradient[i+1].r - gradient[i].r) * t;
+				color.g = gradient[i].g + (gradient[i+1].g - gradient[i].g) * t;
+				color.b = gradient[i].b + (gradient[i+1].b - gradient[i].b) * t;
 			}
 
 			out.pixels.push_back(color);

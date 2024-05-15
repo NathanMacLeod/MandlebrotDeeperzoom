@@ -16,7 +16,7 @@ FloatingPointBinaryString FloatingPointDecimalString::to_binary(int max_bits_rig
 
 	FloatingPointDecimalString x{ left_of_fp, {} };
 	while (!x.left_of_fp_zero()) {
-		out.left_of_fp.push_back(x.left_of_fp.back() % 2 == 0);
+		out.left_of_fp.insert(out.left_of_fp.begin(), x.left_of_fp.back() % 2 != 0);
 		x = x.div2();
 	}
 

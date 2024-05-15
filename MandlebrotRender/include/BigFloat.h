@@ -584,7 +584,7 @@ public:
 	}
 
 	BigFloat(std::string scientific_notation)
-		: is_negative(false), is_zero(false)
+		: is_negative(false), is_zero(false), exponent(0)
 	{
 		if (!scientific_notation_number_valid(scientific_notation)) {
 			*this = zero();

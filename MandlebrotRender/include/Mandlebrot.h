@@ -25,6 +25,27 @@ struct image {
 	std::vector<rgb> pixels;
 };
 
+struct render_settings {
+	cmplx<BigFloat<5>> cam_pos = { BigFloat<5>("-0.8032523144678346") , BigFloat<5>("0.1780442509067320") };
+	double target_zoom = 199671284473369792;
+	int max_iterations = 2000;
+	int image_width = 1920;
+	int image_height = 1080;
+	int thread_count = 8;
+	int supersample_factor = 2;
+	int fps = 60;
+	int start_frame = 0;
+	int max_frames_to_render = std::numeric_limits<int>::max();
+	double zoom_speed = 1.35;
+	bool smoothing_enabled = true;
+	std::string write_directory_path = "./render_output";
+	int approximation_block_size = 16;
+	const std::vector<rgb>& gradient = {
+		{ 0, 0, 0,},
+		{ 255, 255, 255 },
+	};
+};
+
 template<int mantissa_len>
 static std::vector<cmplx<double>>get_mandlebrot_sequence_of_coord(cmplx<BigFloat<mantissa_len>> c, int max_itr) {
 	if (c.mag_sqr().to_double() >= 4) return {};
@@ -117,7 +138,7 @@ static std::vector<float> approx_mandlebrot_itrerations_of_grid(int screen_width
 		C_i = C_new;
 
 		double k = grid_width * inv_zoom;
-		if (C_i.mag_sqr() * k * k * k * 1 > B_i.mag_sqr() * k * k) {
+		if (C_i.mag_sqr() * k * k  > B_i.mag_sqr()) {
 			//no longer within accuracy threshold
 			break;
 		}
@@ -133,6 +154,7 @@ static std::vector<float> approx_mandlebrot_itrerations_of_grid(int screen_width
 				cmplx<double> delta = { inv_zoom * (grid_x - grid_width / 2), inv_zoom * (grid_width / 2 - grid_y) };
 				cmplx<double> delta_sqr = delta * delta;
 				approx_seq_val = anchor_sequence[i] + (A_i * delta + ((B_i * delta_sqr) + (C_i * delta * delta_sqr)));
+				cmplx<double> f = anchor_sequence[i];
 				last_seq_val_per_cell[indx] = approx_seq_val;
 
 				if (min_pixel_x + grid_x == 63 && min_pixel_y + grid_y == 100) {
@@ -226,27 +248,22 @@ std::vector<float> calculate_mandlebrot_dynamic_accuracy(int screen_width, int s
 	if (zoom < ten_pow_i(14)) {
 		cmplx<double> double_camera = cmplx<double>{ camera_coord.re.to_double(), camera_coord.im.to_double() };
 		computation = calculate_mandlebrot_simple(screen_width, screen_height, zoom, double_camera, max_itr, smoothed);
-		printf("double");
 	}
 	else if (zoom < ten_pow_i(17)) {
 		cmplx<BigFloat<2>> cam = cmplx<BigFloat<2>>{ BigFloat<2>(camera_coord.re), BigFloat<2>(camera_coord.im) };
 		computation = calculate_mandlebrot(screen_width, screen_height, zoom, cam, max_itr, approx_grid_size, smoothed);
-		printf("prec 2");
 	}
-	else if (zoom < ten_pow_i(27)) {
+	else if (zoom < ten_pow_i(25)) {
 		cmplx<BigFloat<3>> cam = cmplx<BigFloat<3>>{ BigFloat<3>(camera_coord.re), BigFloat<3>(camera_coord.im) };
 		computation = calculate_mandlebrot(screen_width, screen_height, zoom, cam, max_itr, approx_grid_size, smoothed);
-		printf("prec 3");
 	}
 	else if (zoom < ten_pow_i(37)) {
 		cmplx<BigFloat<4>> cam = cmplx<BigFloat<4>>{ BigFloat<4>(camera_coord.re), BigFloat<4>(camera_coord.im) };
 		computation = calculate_mandlebrot(screen_width, screen_height, zoom, cam, max_itr, approx_grid_size, smoothed);
-		printf("prec 4");
 	}
 	else if (zoom < ten_pow_i(47)) {
 		cmplx<BigFloat<5>> cam = cmplx<BigFloat<5>>{ BigFloat<5>(camera_coord.re), BigFloat<5>(camera_coord.im) };
 		computation = calculate_mandlebrot(screen_width, screen_height, zoom, cam, max_itr, approx_grid_size, smoothed);
-		printf("prec 5");
 	}
 	else if (zoom < ten_pow_i(56)) {
 		cmplx<BigFloat<6>> cam = cmplx<BigFloat<6>>{ BigFloat<6>(camera_coord.re), BigFloat<6>(camera_coord.im) };
@@ -274,6 +291,6 @@ std::vector<float> calculate_mandlebrot_dynamic_accuracy(int screen_width, int s
 
 std::vector<float> downsize_cacluation(const std::vector<float>& calc, int calc_width, int calc_height, int shrink_factor);
 
-image render_calculation_histogram(int image_width, int image_height, const std::vector<float>& itr_to_diverge_per_pixel, rgb min_itr_color, rgb max_itr_color);
+image render_calculation_histogram(int image_width, int image_height, const std::vector<float>& itr_to_diverge_per_pixel, const std::vector<rgb> &gradient);
 
 void export_iamge(std::string path, image img);
