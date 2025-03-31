@@ -18,30 +18,10 @@
       <Platform>x64</Platform>
     </ProjectConfiguration>
   </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="src\AnimationRender.cpp" />
-    <ClCompile Include="src\ArgumentParsing.cpp" />
-    <ClCompile Include="src\BigFloat.cpp" />
-    <ClCompile Include="src\main.cpp" />
-    <ClCompile Include="src\Mandlebrot.cpp" />
-    <ClCompile Include="src\MandlebrotRender.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClInclude Include="include\AnimationRender.h" />
-    <ClInclude Include="include\ArgumentParsing.h" />
-    <ClInclude Include="include\BigFloat.h" />
-    <ClInclude Include="include\InteractiveExplorer.h" />
-    <ClInclude Include="include\Mandlebrot.h" />
-    <ClInclude Include="include\olcPixelGameEngine.h" />
-    <ClInclude Include="include\stb_image_write.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="packages.config" />
-  </ItemGroup>
   <PropertyGroup Label="Globals">
-    <VCProjectVersion>16.0</VCProjectVersion>
+    <VCProjectVersion>17.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
-    <ProjectGuid>{fcb79611-f632-43b7-add1-12849f39fc00}</ProjectGuid>
+    <ProjectGuid>{555dbaf0-d06b-49cf-8070-53fbe391298e}</ProjectGuid>
     <RootNamespace>MandlebrotRender</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
@@ -122,7 +102,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
@@ -137,10 +117,8 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS</PreprocessorDefinitions>
+      <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)MandlebrotRender\include</AdditionalIncludeDirectories>
-      <LanguageStandard>stdcpp20</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -149,14 +127,24 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
   </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="include\AnimationRender.h" />
+    <ClInclude Include="include\ArgumentParsing.h" />
+    <ClInclude Include="include\BigFloat.h" />
+    <ClInclude Include="include\InteractiveExplorer.h" />
+    <ClInclude Include="include\Mandlebrot.h" />
+    <ClInclude Include="include\olcPixelGameEngine.h" />
+    <ClInclude Include="include\stb_image_write.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="src\AnimationRender.cpp" />
+    <ClCompile Include="src\ArgumentParsing.cpp" />
+    <ClCompile Include="src\BigFloat.cpp" />
+    <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\Mandlebrot.cpp" />
+    <ClCompile Include="src\MandlebrotRender.cpp" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
-    <Import Project="..\packages\zlib_static.1.2.11.9\build\native\zlib_static.targets" Condition="Exists('..\packages\zlib_static.1.2.11.9\build\native\zlib_static.targets')" />
   </ImportGroup>
-  <Target Name="EnsureNuGetPackageBuildImports" BeforeTargets="PrepareForBuild">
-    <PropertyGroup>
-      <ErrorText>This project references NuGet package(s) that are missing on this computer. Use NuGet Package Restore to download them.  For more information, see http://go.microsoft.com/fwlink/?LinkID=322105. The missing file is {0}.</ErrorText>
-    </PropertyGroup>
-    <Error Condition="!Exists('..\packages\zlib_static.1.2.11.9\build\native\zlib_static.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\zlib_static.1.2.11.9\build\native\zlib_static.targets'))" />
-  </Target>
 </Project>

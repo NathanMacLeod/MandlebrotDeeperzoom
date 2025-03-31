@@ -1,6 +1,7 @@
 #include "../include/AnimationRender.h"
 #include <thread>
 #include <atomic>
+#include <format>
 
 int calculate_animation_framecount(double target_zoom, double starting_zoom, int fps, double zoom_speed) {
 	//zoom(t) = starting_zoom * (zoom_speed + 1)^time

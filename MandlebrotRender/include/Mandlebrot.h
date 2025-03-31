@@ -33,10 +33,10 @@ struct render_settings {
 	int image_height = 1080;
 	int thread_count = 8;
 	int supersample_factor = 2;
-	int fps = 60;
+	int fps = 30;
 	int start_frame = 0;
 	int max_frames_to_render = std::numeric_limits<int>::max();
-	double zoom_speed = 1.35;
+	double zoom_speed = 1.4;
 	bool smoothing_enabled = true;
 	std::string write_directory_path = "./render_output";
 	int approximation_block_size = 16;

@@ -19,7 +19,7 @@ struct option_parse_response {
 
 struct run_info {
 	bool use_interactive_mode = true;
-	bool parse_error = false;
+	bool dont_run = false;
 	render_settings settings;
 };
 

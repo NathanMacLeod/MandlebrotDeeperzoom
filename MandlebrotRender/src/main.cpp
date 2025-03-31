@@ -7,7 +7,7 @@
 int main(int argc, char* argv[])
  {
 	run_info info = parse_run_info_from_args(argc, argv);
-	if (info.parse_error) return 1;
+	if (info.dont_run) return 1;
 
 	if (info.use_interactive_mode) {
 		InteractiveExplorer demo(info.settings);
