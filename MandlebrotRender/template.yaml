@@ -1,0 +1,179 @@
+specificationVersion: 'jobtemplate-2023-09'
+name: '{{Param.JobName}}'
+description: |
+  This is a test job for step-step dependencies with job attachments data
+  flowing along the dependency edges.
+parameterDefinitions:
+- name: JobName
+  type: STRING
+  default: Mandlebrot Zoom
+- name: InDir
+  type: PATH
+  objectType: DIRECTORY
+  dataFlow: IN
+  default: .
+  description: Input to jobs
+- name: Executable
+  type: PATH
+  objectType: FILE
+  dataFlow: OUT
+  default: ./mandlebrot
+  description: Executable used to render mandlebrot
+- name: Frames
+  type: PATH
+  objectType: DIRECTORY
+  dataFlow: OUT
+  default: ./frames
+  description: Directory where frames are rendered to
+
+- name: RealCoordinate
+  type: STRING
+  default: "-0.8032523144678346"
+  description: Real coordinate that zoom will be centered on.
+- name: ImaginaryCoordinate
+  type: STRING
+  default: "0.1780442509067320"
+  description: Imaginary coordinate that zoom will be centered on.
+- name: MaxIterations
+  type: INT
+  default: 25000
+  description: The maximum element of a mandlebrot sequence checked to see if the sequence diverges or not. A higher value will give more details especially at deeper zoom levels, but increases computation time.
+- name: TargetZoom
+  type: FLOAT
+  default: 199671284473369792.0
+  description: What zoom level the animation will continue to. A deeper zoom will result in a longer video.
+- name: ZoomSpeed
+  type: FLOAT
+  default: 1.15
+  description: How quickly the animation will zoom in. Zoom at time 't' in seconds is (Width / 4) * ZoomSpeed ^ t.
+- name: SuperSampleLevel
+  type: INT
+  default: 3
+  description: Increases the number of samples per pixel. Helps reduce noise, at cost of higher computation. Numer of samples taken per pixel is the square of the level.
+- name: Width
+  type: INT
+  default: 1920
+  description: Width of the generated video.
+- name: Height
+  type: INT
+  default: 1080
+  description: Height of the generated video
+- name: FPS
+  type: INT
+  default: 60
+  description: FPS of generated video. 
+- name: OutputName
+  type: PATH
+  objectType: FILE
+  dataFlow: OUT
+  default: ./zoom.mp4
+  description: Finished zoom video
+- name: CondaPackages
+  type: STRING
+  description: Choose which Conda packages to install for the render. Requires a Queue Environment to create the Conda Environment.
+  default: ffmpeg gxx make python=3.11
+- name: CondaChannels
+  userInterface:
+    control: LINE_EDIT
+    label: Conda Channels
+    groupLabel: Software Environment
+  type: STRING
+  description: >
+    This is a space-separated list of Conda channels from which to install packages. Deadline Cloud SMF packages are
+    installed from the "deadline-cloud" channel that is configured by Deadline Cloud.
+
+    Add "conda-forge" to get packages from the https://conda-forge.org/ community, and "defaults" to get packages
+    from Anaconda Inc (make sure your usage complies with https://www.anaconda.com/terms-of-use).
+  default: "deadline-cloud conda-forge"
+- name: TaskCount
+  type: INT
+  default: 100
+steps:
+- name: GenerateFrames
+  parameterSpace:
+    taskParameterDefinitions:
+    - name: TaskNum
+      type: INT
+      range: "1-{{Param.TaskCount}}"
+  script:
+    actions:
+      onRun:
+        command: bash
+        args: ['{{Task.File.Run}}']
+    embeddedFiles:
+      - name: Run
+        type: TEXT
+        data: |
+          #!/bin/bash
+          
+          cd {{Param.InDir}}
+          make
+          mkdir -p {{Param.Frames}}
+          ./mandlebrot \
+          --animation_mode \
+          --image-width {{Param.Width}} \
+          --image-height {{Param.Height}} \
+          --fps {{Param.FPS}} \
+          --thread-count 12 \
+          --zoom-speed {{Param.ZoomSpeed}} \
+          --target-zoom {{Param.TargetZoom}} \
+          -re {{Param.RealCoordinate}} \
+          -im {{Param.ImaginaryCoordinate}} \
+          --max-iterations {{Param.MaxIterations}} \
+          --supersample-factor {{Param.SuperSampleLevel}} \
+          --frame-offset $(({{Task.Param.TaskNum}} - 1)) \
+          --frame-skip-distance {{Param.TaskCount}} \
+          --output-directory {{Param.Frames}} \
+
+      - name: GenRenderCommand
+        type: TEXT
+        data: |
+          import os
+          import math
+
+          zoom_speed = {{Param.ZoomSpeed}}
+          image_width = {{Param.Width}}
+          starting_zoom = image_width / 4
+          target_zoom = {{Param.TargetZoom}}
+          fps = {{Param.FPS}}
+          total_frame_count = fps * math.log(target_zoom / starting_zoom) / math.log(zoom_speed + 1)
+          frames_per_task = int(total_frame_count / {{Param.TaskCount}})
+          start_frame = frames_per_task * {{Task.Param.TaskNum}}
+
+          run_command = (
+            f"./mandlebrot"
+            f" --animation_mode"
+            f" --image-width {image_width}"
+            f" --image-height {{Param.Height}}"
+            f" --fps {fps}"
+            f" --thread-count 12"
+            f" --zoom-speed {zoom_speed}"
+            f" --target-zoom {target_zoom}"
+            f" -re {{Param.RealCoordinate}}"
+            f" -im {{Param.ImaginaryCoordinate}}"
+            f" --max-iterations {{Param.MaxIterations}}"
+            f" --supersample-factor {{Param.SuperSampleLevel}}"
+            f" --start_frame {start_frame}"
+            f" --max_frames_rendered {frames_per_task}"
+            f" --output_directory {{Param.Frames}}"
+          )
+
+          print(run_command)
+- name: CombineFrames
+  dependencies:
+  - dependsOn: GenerateFrames
+  script:
+    - name: CombineFrames
+  script:
+    actions:
+      onRun:
+        command: bash
+        args: ['{{Task.File.Run}}']
+    embeddedFiles:
+      - name: Run
+        type: TEXT
+        data: |
+          #!/bin/bash
+          
+          cd {{Param.Frames}}
+          cat $(find . -maxdepth 1 -name "*.png" | sort -V) | ffmpeg -i - -r {{Param.FPS}} -vcodec libx264 -crf 25 -pix_fmt yuv420p {{Param.OutputName}}

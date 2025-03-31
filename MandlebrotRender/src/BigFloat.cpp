@@ -33,8 +33,8 @@ FloatingPointBinaryString FloatingPointDecimalString::to_binary(int max_bits_rig
 	return out;
 }
 
-template<int exp_len, int mant_len>
+template<int mant_len>
 BigFloat<mant_len> operator*(double d, BigFloat<mant_len> b) {
 	if (d == 2) return b.times2();
-	return BigFloat<exp_len, mant_len>(d) * b;
+	return BigFloat<mant_len>(d) * b;
 }

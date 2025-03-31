@@ -1,5 +1,6 @@
 #pragma once
 #include "BigFloat.h"
+#include <cmath>
 #include <vector>
 #include <map>
 
@@ -33,17 +34,14 @@ struct render_settings {
 	int image_height = 1080;
 	int thread_count = 8;
 	int supersample_factor = 2;
-	int fps = 30;
-	int start_frame = 0;
-	int max_frames_to_render = std::numeric_limits<int>::max();
-	double zoom_speed = 1.4;
+	int fps = 60;
+	int frame_offset = 0;
+	int frame_skip_distance = 1;
+	double zoom_speed = 1.35;
 	bool smoothing_enabled = true;
 	std::string write_directory_path = "./render_output";
 	int approximation_block_size = 16;
-	const std::vector<rgb>& gradient = {
-		{ 0, 0, 0,},
-		{ 255, 255, 255 },
-	};
+	std::vector<rgb> gradient;
 };
 
 template<int mantissa_len>
@@ -138,7 +136,7 @@ static std::vector<float> approx_mandlebrot_itrerations_of_grid(int screen_width
 		C_i = C_new;
 
 		double k = grid_width * inv_zoom;
-		if (C_i.mag_sqr() * k * k  > B_i.mag_sqr()) {
+		if (C_i.mag_sqr() * k * k > B_i.mag_sqr()) {
 			//no longer within accuracy threshold
 			break;
 		}
@@ -291,6 +289,6 @@ std::vector<float> calculate_mandlebrot_dynamic_accuracy(int screen_width, int s
 
 std::vector<float> downsize_cacluation(const std::vector<float>& calc, int calc_width, int calc_height, int shrink_factor);
 
-image render_calculation_histogram(int image_width, int image_height, const std::vector<float>& itr_to_diverge_per_pixel, const std::vector<rgb> &gradient);
+image render_calculation_histogram(int image_width, int image_height, const std::vector<float>& itr_to_diverge_per_pixel, const std::vector<rgb>& gradient);
 
 void export_iamge(std::string path, image img);

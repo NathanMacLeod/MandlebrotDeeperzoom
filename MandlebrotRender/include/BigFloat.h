@@ -11,7 +11,8 @@ public:
 	BitString() {}
 	BitString(const std::array<uint32_t, length> b)
 		: bits(b)
-	{}
+	{
+	}
 	BitString(int32_t c) {
 		bits[length - 1] = c;
 		for (int i = 0; i < length - 2; i++) {
@@ -571,7 +572,8 @@ public:
 
 	BigFloat(bool is_negative, int32_t exponent, BitString<mantissa_length>&& mantissa)
 		: is_negative(is_negative), is_zero(false), exponent(exponent), mantissa(std::move(mantissa))
-	{}
+	{
+	}
 
 	static bool scientific_notation_number_valid(std::string scientific_notation) {
 		// Optional leading "-"
@@ -896,14 +898,20 @@ public:
 	}
 
 	BigFloat operator/(const BigFloat& b) const {
-		//subtract the exponents
+		//multiply by inverse of b.
+		//b = mantissa * 2^exp
+		//1 / b = (1 / mantissa) * 2^-exp
+		//to get (1 / mantissa) at higher precission, we can store the first 52 bits of the mantissa in a double
+		//and use hardware to get an approximation of the inverse. Then we can use newtons method to refine this
+		//approximation in higher precision.
+
 		if (is_zero) return zero();
 		else if (b.is_zero) {
 			printf("ERR: divison by zero");
 			return zero();
 		}
 
-		//find inverse of a floating point approximation of the mantissa of b
+		//Get the double approximation of mantissa of b
 		uint64_t b_mantissa_float_approx = 0x3FF0000000000000 | (uint64_t(b.mantissa.bits[0]) << FIRST_MANTISSA_CHUNK_IN_DOUBLE_OFFSET);
 		if (mantissa_length > 1) b_mantissa_float_approx |= (uint64_t(b.mantissa.bits[1]) >> NUM_BITS_CUT_OFF_FROM_SECOND_MANITSSA_CHUNK_IN_DOUBLE & 0xFFFFF);
 		double inverse = 1.0f / *(double*)&b_mantissa_float_approx;
@@ -913,8 +921,7 @@ public:
 		b_mantissa.is_negative = false;
 		b_mantissa.exponent = 0;
 
-		//refine inverse newton-raphson
-
+		//refine apporximation with newton-raphson
 		//computing number of iterations needed knowing that error is halfed every time,
 		//and that our approximation is already accurate to the first 52 bits.
 		int required_iterations = 0;
@@ -922,8 +929,6 @@ public:
 		while (x >>= 1) required_iterations++;
 
 		for (int i = 0; i < required_iterations; i++) {
-			BigFloat apple = b_inv.times2();
-			BigFloat banana = b_inv * b_inv * b_mantissa;
 			b_inv = b_inv.times2() - b_inv * b_inv * b_mantissa;
 		}
 

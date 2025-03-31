@@ -63,8 +63,8 @@ static std::vector<option> options = {
 	{"output_directory", "o", "(Only significant for animation render) framerate for the generated animation.", 1},
 	{"thread_count", "t", "(Only significant for animation render) number of threads to use.", 1},
 	{"zoom_speed", "zs", "(Only significant for animation render) How quickly the animation zooms in.", 1},
-	{"start_frame", "t", "(Only significant for animation render) Skip rendering the first number of frames in the animation.", 1},
-	{"max_frames_rendered", "m", "(Only significant for animation render) Set an upper limit on the total numer of frames to render", 1},
+	{"frame_offset", "t", "(Only significant for animation render) See explanation for --frame-skip-distance.", 1},
+	{"frame_skip_distance", "m", "(Only significant for animation render) for all frames 0 to total_frames, Frame numbers rendered are offset + skip_distance * i for all i >= 0", 1},
 	{"approximation_block_size", "a", "For deeper zooms, uses an approximation method where few BigFloat samples are taken, and then nearby samples within block size are approximated from that sample.", 1},
 	{"max_iterations", "i", "The max number of iterations tested when determining if a sequence diverges or not. Higher iterations results in more detail, but longer computation time", 1},
 	{"image_width", "w", "Width of the render", 1},
@@ -78,6 +78,11 @@ static std::vector<option> options = {
 
 run_info parse_run_info_from_args(int argc, char** argv) {
 	run_info out;
+
+	out.settings.gradient = {
+		rgb{ 0, 0, 0 },
+		rgb{ 255, 255, 255 }
+	};
 	out.dont_run = false;
 
 	std::string real_coordinate = "-0.8032523144678346";
@@ -109,8 +114,8 @@ run_info parse_run_info_from_args(int argc, char** argv) {
 		else if (resp.option_long_name == "output_directory") out.settings.write_directory_path = resp.args[0];
 		else if (resp.option_long_name == "thread_count") out.settings.thread_count = stoi(resp.args[0]);
 		else if (resp.option_long_name == "zoom_speed") out.settings.zoom_speed = stof(resp.args[0]);
-		else if (resp.option_long_name == "start_frame") out.settings.start_frame = stoi(resp.args[0]);
-		else if (resp.option_long_name == "max_frames_rendered") out.settings.max_frames_to_render = stoi(resp.args[0]);
+		else if (resp.option_long_name == "frame_offset") out.settings.frame_offset = stoi(resp.args[0]);
+		else if (resp.option_long_name == "frame_skip_distance") out.settings.frame_skip_distance = stoi(resp.args[0]);
 		else if (resp.option_long_name == "approximation_block_size") out.settings.approximation_block_size = stoi(resp.args[0]);
 		else if (resp.option_long_name == "max_iterations") out.settings.max_iterations = stoi(resp.args[0]);
 		else if (resp.option_long_name == "image_width") out.settings.image_width = stoi(resp.args[0]);

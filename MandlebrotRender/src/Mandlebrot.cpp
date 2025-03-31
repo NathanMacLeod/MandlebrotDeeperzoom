@@ -49,6 +49,10 @@ image render_calculation_histogram(int image_width, int image_height, const std:
 	out.width = image_width;
 	out.height = image_height;
 
+	for (rgb r : gradient) {
+		printf("r: %d, g: %d, b: %d\n", r.r, r.g, r.b);
+	}
+
 	if (gradient.size() < 2) {
 		printf("Gradient needs to contain at least 2 colors\n");
 		return out;
@@ -98,9 +102,9 @@ image render_calculation_histogram(int image_width, int image_height, const std:
 				int i = int(scaled_gradient);
 				double t = fmod(scaled_gradient, 1.0);
 
-				color.r = gradient[i].r + (gradient[i+1].r - gradient[i].r) * t;
-				color.g = gradient[i].g + (gradient[i+1].g - gradient[i].g) * t;
-				color.b = gradient[i].b + (gradient[i+1].b - gradient[i].b) * t;
+				color.r = gradient[i].r + (gradient[i + 1].r - gradient[i].r) * t;
+				color.g = gradient[i].g + (gradient[i + 1].g - gradient[i].g) * t;
+				color.b = gradient[i].b + (gradient[i + 1].b - gradient[i].b) * t;
 			}
 
 			out.pixels.push_back(color);
